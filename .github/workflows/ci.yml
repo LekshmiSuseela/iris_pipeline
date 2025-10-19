@@ -30,7 +30,7 @@ jobs:
 
     - name: Pull data and model from GCS
       run: |
-        echo "🔄 Fetching data and model with DVC from GCS remote..."
+        echo "Fetching data and model with DVC from GCS remote..."
 
         # Check if DVC is initialized
         if [ ! -d ".dvc" ]; then
@@ -39,12 +39,12 @@ jobs:
         fi
 
         # Configure GCS remote (replace with your actual bucket name/path)
-        echo "🔗 Setting DVC remote to GCS bucket for 21f1001276_iris_pipeline..."
+        echo "Setting DVC remote to GCS bucket for 21f1001276_iris_pipeline..."
         dvc remote remove origin 2>/dev/null || true
         dvc remote add -d origin gs://21f1001276_iris_pipeline
 
         # Set credentials (using GitHub Secret)
-        echo "🔑 Configuring GCP credentials..."
+        echo "Configuring GCP credentials..."
         echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp-key.json
         gcloud auth activate-service-account --key-file=gcp-key.json
         export GOOGLE_APPLICATION_CREDENTIALS="gcp-key.json"
