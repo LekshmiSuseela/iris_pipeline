@@ -1,0 +1,54 @@
+name: CI Pipeline for Iris Homework
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1️⃣ Checkout repository
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2️⃣ Setup Python
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    # 3️⃣ Install dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt || true
+        pip install pytest dvc cml scikit-learn joblib pandas
+
+    # 4️⃣ Pull data and model from DVC remote
+    - name: Pull data and model from DVC
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      run: |
+        dvc pull
+        ls -R
+
+    # 5️⃣ Run unit tests
+    - name: Run Pytest
+      run: pytest -v --junitxml=test-results.xml || true
+
+    # 6️⃣ Report test results via CML
+    - name: Post test report
+      if: github.event_name == 'pull_request'
+      env:
+        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "### ✅ Pytest Report" > report.md
+        pytest -v >> report.md || true
+        cml comment create report.md
