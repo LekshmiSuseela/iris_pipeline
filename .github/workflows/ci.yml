@@ -34,7 +34,7 @@ jobs:
 
         # Check if DVC is initialized
         if [ ! -d ".dvc" ]; then
-          echo "⚙️ Initializing DVC..."
+          echo "Initializing DVC..."
           dvc init --no-scm
         fi
 
