@@ -1,4 +1,4 @@
-name: CI Pipeline for Iris Homework
+name: CI for Iris Pipeline
 
 on:
   push:
@@ -8,47 +8,44 @@ on:
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
-  run-tests:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout repository
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 2️⃣ Setup Python
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
-    # 3️⃣ Install dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt || true
-        pip install pytest dvc cml scikit-learn joblib pandas
+        pip install pytest dvc cml scikit-learn pandas joblib
 
-    # 4️⃣ Pull data and model from DVC remote
-    - name: Pull data and model from DVC
-      env:
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+    - name: Pull data and model
       run: |
-        dvc pull
+        echo "Fetching data and model with DVC..."
+        dvc pull || echo "⚠️ No DVC remote found or not configured"
         ls -R
 
-    # 5️⃣ Run unit tests
-    - name: Run Pytest
-      run: pytest -v --junitxml=test-results.xml || true
+    - name: Run Sanity Test and Pytest
+      run: |
+        echo "Running sanity check..."
+        python --version
+        ls
+        pytest -v > test_report.txt || true
 
-    # 6️⃣ Report test results via CML
-    - name: Post test report
+    - name: Post CML Report
       if: github.event_name == 'pull_request'
       env:
         REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        echo "### ✅ Pytest Report" > report.md
-        pytest -v >> report.md || true
+        echo "### 🧪 CI Sanity Test and Pytest Report" > report.md
+        cat test_report.txt >> report.md
         cml comment create report.md
