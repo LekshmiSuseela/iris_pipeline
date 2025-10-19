@@ -51,9 +51,9 @@ jobs:
 
         # Try to pull data and model
         echo "⬇️ Pulling data and model from GCS..."
-        dvc pull || echo "⚠️ DVC pull failed — check remote or permissions"
+        dvc pull || echo "DVC pull failed — check remote or permissions"
 
-        echo "🧾 Listing fetched files..."
+        echo "Listing fetched files..."
         ls -R
 
     - name: Run Sanity Test and Pytest
