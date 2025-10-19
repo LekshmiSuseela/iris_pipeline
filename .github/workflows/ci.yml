@@ -28,10 +28,32 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install pytest dvc
 
-    - name: Pull data and model
+    - name: Pull data and model from GCS
       run: |
-        echo "Fetching data and model with DVC..."
-        dvc pull || echo "⚠️ No DVC remote found or not configured"
+        echo "🔄 Fetching data and model with DVC from GCS remote..."
+
+        # Check if DVC is initialized
+        if [ ! -d ".dvc" ]; then
+          echo "⚙️ Initializing DVC..."
+          dvc init --no-scm
+        fi
+
+        # Configure GCS remote (replace with your actual bucket name/path)
+        echo "🔗 Setting DVC remote to GCS bucket for 21f1001276_iris_pipeline..."
+        dvc remote remove origin 2>/dev/null || true
+        dvc remote add -d origin gs://21f1001276_iris_pipeline
+
+        # Set credentials (using GitHub Secret)
+        echo "🔑 Configuring GCP credentials..."
+        echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" > gcp-key.json
+        gcloud auth activate-service-account --key-file=gcp-key.json
+        export GOOGLE_APPLICATION_CREDENTIALS="gcp-key.json"
+
+        # Try to pull data and model
+        echo "⬇️ Pulling data and model from GCS..."
+        dvc pull || echo "⚠️ DVC pull failed — check remote or permissions"
+
+        echo "🧾 Listing fetched files..."
         ls -R
 
     - name: Run Sanity Test and Pytest
@@ -49,4 +71,3 @@ jobs:
         echo "### 🧪 CI Sanity Test and Pytest Report" > report.md
         cat test_report.txt >> report.md
         cml comment create report.md
-
